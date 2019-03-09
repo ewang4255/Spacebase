@@ -33,11 +33,11 @@ public class VisionTurnCommand extends Command{
     public static final int LOWERTHRESHOLD = 300; 
     public static final int HIGHERTHRESHOLD = 340;
     public static final int OUTERLOWERTHRESHOLD = 100; 
-    public static final int OUTERHIGHERTHRESHOLD = 550;
+    public static final int OUTERHIGHERTHRESHOLD = 540;
    
     public double TURNSPEED = 0.15;
-    private double MaxVelocity = 0.2;
-    private double PValue = 0.025;
+    //private double MaxVelocity = 0.2;
+    //private double PValue = 0.025;
    
     private Point MidPoint;
     private Target[] targets;
@@ -60,47 +60,37 @@ public class VisionTurnCommand extends Command{
         
         System.out.println("MIDPOINT: "+ MidPoint);
         
-        if(MidPoint.x > HIGHERTHRESHOLD || MidPoint.x < LOWERTHRESHOLD){
-            /*
-            if(TURNSPEED > MaxVelocity) {
-                TURNSPEED = MaxVelocity;
-            } */
-           
-            if(MidPoint.x > OUTERLOWERTHRESHOLD && MidPoint.x < OUTERHIGHERTHRESHOLD) {
-               System.out.println("OUTER THRESHOLD REACHED!!");
-
-               
-               Robot.driveSys.setMotorsLeft(TURNSPEED*Math.signum(MidPoint.x - half));
-               Robot.driveSys.setMotorsRight(-TURNSPEED*Math.signum(MidPoint.x - half));
-               
-                //slows down proportionally to distance from midpoint
-                /*
-                if(MidPoint.x < half) { // if midpoint is too far left
-                    Robot.driveSys.setMotorsLeft(-TURNSPEED);
-                    //320 - midpoint = distance from middle of screen; 220 is half of full inner threshold range [200-440]
-                    Robot.driveSys.setMotorsRight(TURNSPEED); 
-                }
-
-                //slows down proportionally to distance from midpoint
-                if(MidPoint.x > half) { // if midpoint is too far right
-                    Robot.driveSys.setMotorsLeft(TURNSPEED);
-                    Robot.driveSys.setMotorsRight(-TURNSPEED); 
-                }
-                */
-
-                TURNSPEED -= PValue; //as robot approaches midpoint, speed decreases
-            }
-            
-            else{
-                TURNSPEED = MaxVelocity; //anywhere out side tolerance range, speed is set at max
-                Robot.driveSys.setMotors(TURNSPEED, -TURNSPEED);
-            }
-        }
-        else{
-            Robot.driveSys.setMotors(0, 0);
-        }
-    }
-    
+        if(MidPoint.x > HIGHERTHRESHOLD || MidPoint.x < LOWERTHRESHOLD){ //anything within THIS threshold will will make robot stop because it's centered
+            // Robot.driveSys.setMotorsLeft(TURNSPEED*(Math.signum(320-MidPoint.x)));
+ 
+             if(MidPoint.x > OUTERLOWERTHRESHOLD && MidPoint.x < OUTERHIGHERTHRESHOLD) { //anything outside HIGHERTHRESHOLD and LOWERTHRESHOLD will trigger a larger range within OUTERLOWERTHRESHOLD and OUTERHIGHERTHRESHOLD for motors to turn
+                 
+             //slows down proportionally to distance from midpoint
+                 if(MidPoint.x < half) { // if midpoint is too far left
+                     Robot.driveSys.setMotorsLeft(TURNSPEED*((half-MidPoint.x)/245)); //320 - midpoint = distance from middle of screen; 245 is a little more than half of outer threshold range [100-540)]
+                     Robot.driveSys.setMotorsRight(-TURNSPEED*((half-MidPoint.x)/245)); //the reason it's 245 instead of 220 is to slow the motors down a bit faster; otherwise motors will not have time to slow down within the periodic; man if only i had time to figure out PID loops...
+                 }
+             
+                 //slows down proportionally to distance from midpoint
+                 if(MidPoint.x > half) { // if midpoint is too far right
+                     Robot.driveSys.setMotorsLeft(-TURNSPEED*((MidPoint.x-half)/245));
+                     Robot.driveSys.setMotorsRight(TURNSPEED*((MidPoint.x-half)/245)); 
+                 }
+             }
+             else{
+                 Robot.driveSys.setMotorsLeft(TURNSPEED);
+                 Robot.driveSys.setMotorsRight(-TURNSPEED);
+         
+             //Robot.driveSys.setMotorsLeft(TURNSPEED*z);
+             //midpoint from middle of screen, smaller distance, smaller the speed
+             //Robot.driveSys.setMotorsRight(TURNSPEED*Math.signum(320-MidPoint.x));
+             //Robot.driveSys.setMotorsRight(TURNSPEED*z);
+             }
+         }
+         else{
+             Robot.driveSys.setMotors(0, 0);
+         }
+     }
 
     public boolean isFinished(){
         return(MidPoint.x < HIGHERTHRESHOLD && MidPoint.x > LOWERTHRESHOLD);
